@@ -232,9 +232,9 @@ export default function Transposer() {
   );
 
   // Encoded state (used for Print / Save PDF and print page’s share row)
-  const stateToken = useMemo(
-    () =>
-      encodeShareState({
+  const stateToken = useMemo(() => {
+    try {
+      return encodeShareState({
         title,
         input,
         fromKey,
@@ -242,13 +242,19 @@ export default function Transposer() {
         capoFret,
         showCapo,
         includeDiagrams,
-      }),
-    [title, input, fromKey, toKey, capoFret, showCapo, includeDiagrams]
-  );
+      });
+    } catch {
+      // Never let a token bug crash the UI while typing/pasting
+      return "";
+    }
+  }, [title, input, fromKey, toKey, capoFret, showCapo, includeDiagrams]);
 
-  // Print link goes to /print?state=...&auto=1
+  // Print link goes to /print?state=...&auto=1 (or just /print if token failed)
   const printHref = useMemo(
-    () => ({ pathname: "/print", query: { state: stateToken, auto: "1" } } as const),
+    () =>
+      stateToken
+        ? ({ pathname: "/print", query: { state: stateToken, auto: "1" } } as const)
+        : ({ pathname: "/print", query: { auto: "1" } } as const),
     [stateToken]
   );
 
