@@ -6,11 +6,9 @@ import "./globals.css";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-// Centralize site name + origin so Metadata can build absolute URLs
+// Site identity
 const siteName = "Guitar Chord Transposer";
-
-// Prefer NEXT_PUBLIC_SITE_URL, but fall back to Vercel’s runtime URL in prod,
-// and localhost in dev so OG/Twitter metadata always has an absolute base.
+// Prefer NEXT_PUBLIC_SITE_URL; fall back to Vercel preview URL or localhost
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
@@ -20,7 +18,7 @@ export const metadata: Metadata = {
   description: "Transpose chord sheets, print/share, optional capo helper & diagrams.",
   applicationName: siteName,
 
-  // Ensures OG image + URLs become absolute for crawlers
+  // Ensure OG/Twitter absolute URLs
   metadataBase: new URL(siteUrl),
 
   icons: {
@@ -32,22 +30,22 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
 
-  // Sensible defaults; route-specific pages (e.g. /print) can override via generateMetadata
+  // Defaults; route pages (e.g. /print) still override as needed
   openGraph: {
     type: "website",
     siteName,
-    url: "/", // resolves against metadataBase
+    url: "/", // resolved against metadataBase
     title: siteName,
     description:
       "Transpose chords instantly. Capo‑aware shapes, diagrams, and a clean print view.",
-    images: ["/og-default.png"], // place a 1200×630 image in /public
+    images: ["/og-default.png"], // place 1200×630 in /public
   },
   twitter: {
     card: "summary_large_image",
     title: siteName,
     description:
       "Transpose chords instantly. Capo‑aware shapes, diagrams, and a clean print view.",
-    images: ["/og-default.png"], // resolves via metadataBase too
+    images: ["/og-default.png"],
   },
 };
 
@@ -58,32 +56,74 @@ export const viewport: Viewport = {
   ],
 };
 
+// Keep your no-flash theme script
 const noFlashThemeScript = `
 (function() {
   try {
     var stored = localStorage.getItem('theme'); // 'light' | 'dark' | 'system' | null
     var root = document.documentElement;
-
-    // If 'system' or null -> remove attribute and let CSS @media handle it
     if (!stored || stored === 'system') {
       root.removeAttribute('data-theme');
       return;
     }
-    // Otherwise set explicit theme attribute
     root.setAttribute('data-theme', stored);
   } catch(_) {}
 })();
 `;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // JSON-LD: connect this site to mattb.com.au and burgoblog.com via Person.sameAs
+  const ldPerson = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": "#matt-burgess",
+    name: "Matt Burgess",
+    url: "https://mattb.com.au",
+    sameAs: ["https://mattb.com.au", "https://burgoblog.com"],
+  };
+
+  const ldWebsite = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: siteName,
+    url: siteUrl,
+    inLanguage: "en-AU",
+    author: { "@id": "#matt-burgess" },
+    creator: { "@id": "#matt-burgess" },
+    publisher: { "@id": "#matt-burgess" },
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* keep your no‑flash theme script */}
         <script dangerouslySetInnerHTML={{ __html: noFlashThemeScript }} />
+        {/* Structured data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(ldPerson) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(ldWebsite) }}
+        />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
+
+        {/* Global footer – hidden when printing */}
+        <footer className="print:hidden border-t border-border mt-8">
+          <div className="mx-auto max-w-5xl p-6 text-center text-xs text-muted">
+            Made by{" "}
+            <a
+              href="https://mattb.com.au"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline decoration-dotted"
+            >
+              Matt Burgess
+            </a>
+          </div>
+        </footer>
       </body>
     </html>
   );
