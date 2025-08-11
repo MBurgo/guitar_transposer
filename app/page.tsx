@@ -1,7 +1,6 @@
 // app/page.tsx
 import Transposer from "@/components/Transposer";
 import ThemeToggle from "@/components/ThemeToggle";
-import InstallPWAButton from "@/components/InstallPWAButton";
 
 export default function Home() {
   return (
@@ -13,11 +12,19 @@ export default function Home() {
             Paste chord lines, choose original and target keys, and get a clean transposed chart.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <InstallPWAButton compact />
-          <ThemeToggle />
-        </div>
+        <ThemeToggle />
       </header>
+
+      {/* How it works – short, scannable on‑ramp */}
+      <section className="rounded-xl border border-border bg-card p-4">
+        <h2 className="text-sm font-semibold">How it works</h2>
+        <ul className="mt-2 list-disc pl-5 text-sm space-y-1">
+          <li><strong>Paste</strong> or type your chord chart on the left.</li>
+          <li>Choose the original <strong>From</strong> key and your target <strong>To</strong> key.</li>
+          <li>Click any chord to see <strong>voicings</strong>; use <strong>Stage Mode</strong> to rehearse or <strong>Print</strong> to save a PDF.</li>
+          <li>Optional: turn on <strong>Capo</strong> to see the shapes to play.</li>
+        </ul>
+      </section>
 
       <Transposer />
     </main>

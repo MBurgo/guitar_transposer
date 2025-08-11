@@ -72,19 +72,19 @@ function FloatingPopover({
   const top = Math.min(window.innerHeight - 220, anchorRect.bottom + margin);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     const onDocClick = (e: MouseEvent) => {
       const el = rootRef.current;
       if (el && !el.contains(e.target as Node)) onClose();
     };
 
     document.addEventListener("keydown", onKey);
-    // Use capture=true so we see the click before it bubbles inside the popover
     document.addEventListener("click", onDocClick, { capture: true });
 
     return () => {
       document.removeEventListener("keydown", onKey);
-      // remove with same capture semantics
       document.removeEventListener("click", onDocClick, true);
     };
   }, [onClose]);
@@ -130,7 +130,9 @@ function ChordPopoverCard({
           >
             ‹
           </button>
-          <span className="text-xs tabular-nums">{has ? `${idx + 1}/${voicings.length}` : "0/0"}</span>
+          <span className="text-xs tabular-nums">
+            {has ? `${idx + 1}/${voicings.length}` : "0/0"}
+          </span>
           <button
             type="button"
             className="rounded border border-border px-2 py-1 text-sm"
@@ -146,12 +148,18 @@ function ChordPopoverCard({
         {has ? (
           <ChordDiagram shape={voicings[idx]} capoFret={capoFret} />
         ) : (
-          <div className="rounded-lg border border-border p-2 text-xs text-muted">No diagram for this symbol.</div>
+          <div className="rounded-lg border border-border p-2 text-xs text-muted">
+            No diagram for this symbol.
+          </div>
         )}
       </div>
 
       <div className="mt-2 flex justify-end">
-        <button type="button" className="text-xs text-muted underline decoration-dotted" onClick={onClose}>
+        <button
+          type="button"
+          className="text-xs text-muted underline decoration-dotted"
+          onClick={onClose}
+        >
           close
         </button>
       </div>
@@ -168,7 +176,9 @@ export default function Transposer() {
   const [toKey, setToKey] = useState<KeyName>("G");
   const [showCapo, setShowCapo] = useState<boolean>(false);
   const [capoFret, setCapoFret] = useState<number>(0);
-  const [includeDiagrams, setIncludeDiagrams] = useState<boolean>(false);
+
+  // Keep this for deep-links to /print with diagrams; no toggle in UI here.
+  const [includeDiagrams] = useState<boolean>(false);
 
   // Popover state (we pass capoFret for the "capo shapes" view)
   const [pop, setPop] = useState<{
@@ -206,15 +216,32 @@ export default function Transposer() {
       .join("");
   }, []);
 
-  const sounding = useMemo(() => safeTranspose(debouncedInput, steps), [debouncedInput, steps, safeTranspose]);
-  const shapesKey = useMemo(() => transposeNote(toKey, -capoFret, preferSharps), [toKey, capoFret, preferSharps]);
-  const capoShapes = useMemo(() => (showCapo ? safeTranspose(sounding, -capoFret) : ""), [showCapo, sounding, capoFret, safeTranspose]);
+  const sounding = useMemo(
+    () => safeTranspose(debouncedInput, steps),
+    [debouncedInput, steps, safeTranspose]
+  );
+
+  const shapesKey = useMemo(
+    () => transposeNote(toKey, -capoFret, preferSharps),
+    [toKey, capoFret, preferSharps]
+  );
+
+  const capoShapes = useMemo(
+    () => (showCapo ? safeTranspose(sounding, -capoFret) : ""),
+    [showCapo, sounding, capoFret, safeTranspose]
+  );
 
   // Encoded state (used for Print / Save PDF and print page’s share row)
   const stateToken = useMemo(
     () =>
       encodeShareState({
-        title, input, fromKey, toKey, capoFret, showCapo, includeDiagrams,
+        title,
+        input,
+        fromKey,
+        toKey,
+        capoFret,
+        showCapo,
+        includeDiagrams,
       }),
     [title, input, fromKey, toKey, capoFret, showCapo, includeDiagrams]
   );
@@ -238,7 +265,6 @@ export default function Transposer() {
     setToKey(decoded.toKey as KeyName);
     setCapoFret(decoded.capoFret ?? 0);
     setShowCapo(!!decoded.showCapo);
-    setIncludeDiagrams(!!decoded.includeDiagrams);
     setIsDemo(false);
   }, []);
 
@@ -266,6 +292,7 @@ export default function Transposer() {
 
   return (
     <section className="space-y-6">
+      {/* Controls */}
       <div className="rounded-2xl border border-border bg-card p-5 md:p-6 shadow-sm">
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-1">
@@ -338,52 +365,12 @@ export default function Transposer() {
               <span className="text-muted">(play shapes in {shapesKey})</span>
             </div>
           )}
-
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={includeDiagrams}
-              onChange={(e) => setIncludeDiagrams(e.target.checked)}
-            />
-            Include chord diagrams in print view
-          </label>
-
-          {/* ACTIONS: responsive layout */}
-          <div className="mt-3 w-full sm:mt-0 sm:w-auto sm:ml-auto flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-            {/* Buttons first on mobile (side-by-side), then before share row on desktop */}
-            <div className="order-1 sm:order-none grid grid-cols-2 gap-2 sm:flex sm:items-center">
-              <button
-                type="button"
-                onClick={() => setStageOpen(true)}
-                className="col-span-1 inline-flex items-center justify-center rounded-lg border border-border px-3 py-2 text-sm hover:bg-background sm:w-auto"
-                title="Open big, high-contrast performance view"
-              >
-                Stage Mode
-              </button>
-
-              <Link
-                href={printHref}
-                className="col-span-1 inline-flex items-center justify-center rounded-lg border border-border px-3 py-2 text-sm hover:bg-background sm:w-auto"
-              >
-                Print / Save PDF
-              </Link>
-            </div>
-
-            {/* Share row (full-width on mobile, scrollable if it overflows) */}
-            <div className="order-2 sm:order-none min-w-0 w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden flex items-center gap-2 px-1 sm:px-0">
-              <span className="hidden sm:inline text-xs text-muted whitespace-nowrap">Share this app</span>
-              <ShareRow
-                sharePath="/"
-                title={title || `Transposed: ${fromKey} → ${toKey}`}
-                message={`Burgo's Chord Transposer — easily transpose songs to different keys and check out different voicings`}
-                showNative={false}
-              />
-            </div>
-          </div>
         </div>
       </div>
 
+      {/* Two columns */}
       <div className="grid gap-4 md:grid-cols-2">
+        {/* Input */}
         <div className="min-w-0">
           <div className="mb-2 flex items-center gap-2">
             <h2 className="text-sm font-medium text-foreground/80">Paste your chords</h2>
@@ -397,27 +384,21 @@ export default function Transposer() {
               setInput(e.target.value);
               if (isDemo) setIsDemo(false);
             }}
+            placeholder="Paste or type chords here…"
             className="h-[40vh] md:h-[260px] w-full max-w-full rounded-2xl border border-border bg-card p-3 font-mono text-[14px] leading-6 text-foreground shadow-sm tracking-normal [tab-size:4] [font-variant-ligatures:none]"
             spellCheck={false}
             style={{ fontFamily: MONO_STACK, letterSpacing: 0 }}
           />
         </div>
 
+        {/* Output */}
         <div className="min-w-0">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
+          <div className="mb-2">
             <h2 className="min-w-0 flex-1 text-sm font-medium text-foreground/80">
               Your transposed chart (sounds in {toKey})
             </h2>
-            <div className="shrink-0 flex items-center gap-2">
-              <button type="button" onClick={onCopy} className="text-sm underline decoration-dotted">
-                Copy
-              </button>
-              {copyState === "ok" && <span className="text-xs text-muted">Copied!</span>}
-              {copyState === "err" && <span className="text-xs text-muted">Copy failed</span>}
-            </div>
           </div>
 
-          {/* Safety wrapper to prevent any accidental horizontal clipping */}
           <div className="max-w-full overflow-x-auto">
             <MonospaceHotspots
               text={sounding}
@@ -445,6 +426,55 @@ export default function Transposer() {
         </div>
       </div>
 
+      {/* Global actions (below both columns) */}
+      <div className="rounded-2xl border border-border bg-card p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+          {/* Left: primary actions */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={onCopy}
+              className="rounded-lg border border-border px-3 py-2 text-sm hover:bg-background"
+              title="Copy the transposed text"
+            >
+              Copy
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStageOpen(true)}
+              className="rounded-lg border border-border px-3 py-2 text-sm hover:bg-background"
+              title="Open big, high-contrast performance view"
+            >
+              Stage Mode
+            </button>
+
+            <Link
+              href={printHref}
+              className="rounded-lg border border-border px-3 py-2 text-sm hover:bg-background"
+              title="Open a clean print view and save to PDF"
+            >
+              Print / Save PDF
+            </Link>
+
+            {copyState === "ok" && <span className="text-xs text-muted">Copied!</span>}
+            {copyState === "err" && <span className="text-xs text-muted">Copy failed</span>}
+          </div>
+
+          {/* Right: share cluster */}
+          <div className="sm:ml-auto flex items-center gap-2 min-w-0">
+            <span className="hidden md:inline text-xs text-muted whitespace-nowrap">Share</span>
+            <ShareRow
+              sharePath="/"
+              title={title || `Transposed: ${fromKey} → ${toKey}`}
+              message={`Burgo's Chord Transposer — easily transpose songs to different keys and check out different voicings`}
+              showNative={false}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* (Optional) Diagrams block — still supported via deep links */}
       {includeDiagrams && (
         <div className="rounded-2xl border border-border bg-card p-4">
           <h3 className="mb-2 text-sm font-semibold">Chord diagrams (first voicing)</h3>
