@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+/* -------- Theme (Tailwind v4) -------- */
+:root {
+  /* Light defaults (used when no data-theme is set and system=light) */
+  --background: #ffffff;
+  --foreground: #111827; /* gray-900 */
+  --muted: #6b7280;      /* gray-500 */
+  --card: #ffffff;
+  --border: #e5e7eb;     /* gray-200 */
+  --ring: #2563eb;       /* blue-600 */
+  --btn-bg: #ffffff;
+  --btn-text: #111827;
+  --textarea-bg: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-btn-bg: var(--btn-bg);
+  --color-btn-text: var(--btn-text);
+  --color-textarea-bg: var(--textarea-bg);
+
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+}
+
+/* System dark fallback (only used when data-theme is not set) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b0f17;
+    --foreground: #f9fafb;
+    --muted: #d1d5db;
+    --card: #111827;
+    --border: #374151;
+    --ring: #93c5fd;
+    --btn-bg: #1f2937;
+    --btn-text: #f9fafb;
+    --textarea-bg: #1e293b;
+  }
+}
+
+/* Explicit overrides when user chooses from ThemeSelect */
+:root[data-theme="light"] {
+  --background: #ffffff;
+  --foreground: #111827;
+  --muted: #6b7280;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --ring: #2563eb;
+  --btn-bg: #ffffff;
+  --btn-text: #111827;
+  --textarea-bg: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --background: #0b0f17;
+  --foreground: #f9fafb;
+  --muted: #d1d5db;
+  --card: #111827;
+  --border: #374151;
+  --ring: #93c5fd;
+  --btn-bg: #1f2937;
+  --btn-text: #f9fafb;
+  --textarea-bg: #1e293b;
+}
+
+/* -------- Base tweaks -------- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+::selection {
+  background: #c7d2fe;  /* indigo-200 */
+  color: #111827;
+}
+
+input, select, textarea, button {
+  font: inherit;
+  color: var(--foreground);
+}
+
+/* Buttons always readable */
+button {
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+}
+
+/* Textareas get themed background */
+textarea {
+  background-color: var(--textarea-bg);
+}
+
+/* Subtle focus ring for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Helpful utility when selects look washed out in dark mode */
+select, input[type="text"] {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem; /* ~rounded-xl */
+  padding: 0.5rem 0.75rem;
+}
+
+/* Keep chord hotspots truly invisible, despite the global <button> rule */
+button[data-chord] { background: transparent !important; }
